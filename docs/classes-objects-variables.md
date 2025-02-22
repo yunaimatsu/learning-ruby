@@ -28,7 +28,7 @@ end
 
 例えば、インスタンス変数`@name`には値`name`、`@artist`には値`artist`に、``@duration`には値`duration`がそれぞれ割り当てられます。
 
-> `inspecr`
+> `inspect`メソッド
 
 では、この新しいクラスをテストしてみましょう。
 
@@ -106,7 +106,7 @@ aSong.to_s  # => "Song: My Way--Sinatra (225)"
 
 では、私たちの例に戻りましょう。`to_s`メソッドを`aSong`という`KaraokeSong`クラスのオブジェクトに送ったところ、Rubyは`KaraokeSong`クラス内でto_sメソッドを見つけられませんでした。そのため、Rubyは`KaraokeSong`の親である`Song`クラスを調べ、そこに私たちがページ18で定義したto_sメソッドを見つけたのです。だから、歌詞が表示されないのです。`Song`クラスは歌詞について何も知りません。
 
-```rn
+```rb
 class KaraokeSong
   # ...
   def to_s
