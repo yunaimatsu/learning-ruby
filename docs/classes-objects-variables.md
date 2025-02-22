@@ -24,8 +24,10 @@ Songクラスの場合、initializeメソッドは3つのパラメータを受�
 
 では、この新しいクラスをテストしてみましょう。
 
+```rb
 aSong = Song.new("Bicylops", "Fleck", 260)
 aSong.inspect  # => "#<Song:0x401b4924 @duration=260, @artist=\"Fleck\", @name=\"Bicylops\">"
+```
 
 うまくいったようです。デフォルトで、inspectメッセージは任意のオブジェクトに送信でき、オブジェクトのIDとインスタンス変数が表示されます。インスタンス変数が正しく設定されていることがわかります。
 
