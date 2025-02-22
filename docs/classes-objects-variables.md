@@ -6,6 +6,7 @@
 
 まずは基本的なクラスSongを作成し、単一のメソッドinitializeだけを含めてみます。
 
+```rb
 class Song
   def initialize(name, artist, duration)
     @name     = name
@@ -13,6 +14,7 @@ class Song
     @duration = duration
   end
 end
+```
 
 initializeはRubyプログラムで特別なメソッドです。Song.newを呼び出して新しいSongオブジェクトを作成すると、Rubyは初期化されていないオブジェクトを作成し、そのオブジェクトのinitializeメソッドを呼び出します。この際、newに渡された引数がinitializeメソッドに渡されます。これにより、オブジェクトの状態を設定するためのコードを書くことができます。
 
