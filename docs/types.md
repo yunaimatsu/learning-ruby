@@ -472,3 +472,86 @@ showRE(a, /\s.*?\s/)  # => The<< moon >>is made of cheese
 showRE(a, /[aeiou]{2,99}/)  # => The m<<oo>>n is made of cheese
 showRE(a, /mo?o/)     # => The <<moo>>n is made of cheese
 
+## 14. 選択肢
+
+縦棒（|）は特別な意味を持つことがわかっています。なぜなら、私たちの行分割パターンではそれをエスケープするためにバックスラッシュを使わなければならなかったからです。これは、エスケープされていない縦棒（|）が、それが前にある正規表現か、それとも後ろにある正規表現のどちらかに一致するためです。
+
+a = "red ball blue sky"
+showRE(a, /d|e/)    # => r<<e>>d ball blue sky
+showRE(a, /al|lu/)   # => red b<<al>>l blue sky
+showRE(a, /red ball|angry sky/)  # => <<red ball>> blue sky
+
+ここには注意すべき罠があります。というのも、| は非常に低い優先度を持っています。上記の最後の例では、「red ball」または「angry sky」に一致しますが、「red ball sky」や「red angry sky」には一致しません。もし「red ball sky」や「red angry sky」に一致させたければ、グループ化を使ってデフォルトの優先度を上書きする必要があります。
+
+## 15. グルーピング
+
+正規表現内で項目をグループ化するために、括弧を使用できます。グループ内のすべては、1つの正規表現として扱われます。
+
+showRE('banana', /an*/)     # => b<<an>>ana
+showRE('banana', /(an)*/)   # => <<>>banana
+showRE('banana', /(an)+/)   # => b<<anan>>a
+
+a = 'red ball blue sky'
+showRE(a, /blue|red/)   # => <<red>> ball blue sky
+showRE(a, /(blue|red) \w+/)  # => <<red ball>> blue sky
+showRE(a, /(red|blue) \w+/)  # => <<red ball>> blue sky
+showRE(a, /red|blue \w+/)    # => <<red>> ball blue sky
+showRE(a, /red (ball|angry) sky/)  # => no match
+
+a = 'the red angry sky'
+showRE(a, /red (ball|angry) sky/)  # => the <<red angry sky>>
+
+括弧は、パターンマッチングの結果を収集するためにも使用されます。Rubyは開き括弧を数え、それぞれに対応する閉じ括弧との間での部分一致の結果を保存します。この部分一致は、パターン内でもRubyプログラム内でも使用できます。パターン内では、\1 は最初のグループの一致、\2 は2番目のグループの一致、というように参照します。パターン外では、特殊変数 $1, $2 などが同じ目的で使用されます。
+
+"12:50am" =~ /(\d\d):(\d\d)(..)/    # => 0
+"Hour is #$1, minute #$2"           # => "Hour is 12, minute 50"
+"12:50am" =~ /((\d\d):(\d\d))(..)/  # => 0
+"Time is #$1"                       # => "Time is 12:50"
+"Hour is #$2, minute #$3"           # => "Hour is 12, minute 50"
+"AM/PM is #$4"                      # => "AM/PM is am"
+
+現在の一致の一部を後で再利用できる能力を使うと、さまざまな形の繰り返しを探すことができます。
+
+同じ文字の繰り返しを一致させる
+
+showRE('He said "Hello"', /(\w)\1/)   # => He said "He<<ll>>o"
+
+同じ部分文字列の繰り返しを一致させる
+
+showRE('Mississippi', /(\w+)\1/)   # => M<<ississ>>ippi
+
+また、バックリファレンスを使用して区切り文字に一致させることもできます。
+
+showRE('He said "Hello"', /(["']).*?\1/)  # => He said <<"Hello">>
+showRE("He said 'Hello'", /(["']).*?\1/)  # => He said <<'Hello'>>
+
+## 16. パターンベースの置換
+
+時には、文字列の中でパターンを見つけることが十分な場合があります。例えば、友達が「a、b、c、d、eという順番で文字を含む単語を見つけて」と挑戦してきた場合、/a.*b.*c.*d.*e/というパターンで単語リストを検索し、「absconded」や「ambuscade」を見つけることができます。これは何かしらの意味があるでしょう。
+
+しかし、パターンマッチに基づいて物事を変更する必要がある時もあります。例えば、私たちの歌のリストファイルを見てみましょう。リストを作成した人はすべてのアーティスト名を小文字で入力しましたが、ジュクボックスの画面に表示するには、ミックスケース（単語の最初の文字が大文字）の方が見栄えが良いです。どうやって各単語の最初の文字を大文字に変更するか？
+
+String#subとString#gsubのメソッドは、文字列内で最初の引数と一致する部分を探し、第二引数で置換します。String#subは1回だけ置換を行い、String#gsubは一致するすべての部分を置換します。どちらも置換を行った新しい文字列を返します。変更版であるString#sub!とString#gsub!は、元の文字列を直接変更します。
+
+a = "the quick brown fox"
+a.sub(/[aeiou]/,  '*')    # => "th* quick brown fox"
+a.gsub(/[aeiou]/, '*')    # => "th* q**ck br*wn f*x"
+a.sub(/\s\S+/,  '')        # => "the brown fox"
+a.gsub(/\s\S+/, '')        # => "the"
+
+これらの関数の第二引数には、文字列またはブロックを指定できます。ブロックを使用した場合、ブロックの値が文字列に置換されます。
+
+a = "the quick brown fox"
+a.sub(/^./) { $&.upcase }    # => "The quick brown fox"
+a.gsub(/[aeiou]/) { $&.upcase }    # => "thE qUIck brOwn fOx"
+
+これでアーティスト名をミックスケースに変換する方法がわかります。単語の最初の文字に一致するパターンは\b\wです。これは、単語境界の後に単語文字を探すものです。これをgsubと組み合わせることで、アーティスト名を変更できます。
+
+def mixedCase(aName)
+  aName.gsub(/\b\w/) { $&.upcase }
+end
+
+mixedCase("fats waller")    # => "Fats Waller"
+mixedCase("louis armstrong")    # => "Louis Armstrong"
+mixedCase("strength in numbers")    # => "Strength In Numbers"
+
