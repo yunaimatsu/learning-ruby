@@ -129,3 +129,130 @@ print <<-STRING1, <<-STRING2
 Concat
         enate
 
+## 4. 文字列の操作
+文字列はおそらく最も多くの組み込みメソッドを持つRubyのクラスで、標準メソッドは75以上あります。すべてのメソッドをここで紹介するわけではなく、ライブラリリファレンスに完全なリストがあります。代わりに、日常的にプログラミング中に登場しやすい一般的な文字列の使い方（イディオム）について見ていきます。
+
+さて、私たちのジュークボックスに戻りましょう。ジュークボックスはインターネットに接続できるように設計されていますが、人気のある曲のいくつかをローカルハードドライブにも保存しています。これで、もしリスがネット接続をかじってしまっても、まだ顧客を楽しませることができます。
+
+歴史的な理由（他に理由があるでしょうか？）で、曲のリストはフラットファイルとして行ごとに保存されています。各行には、曲を含むファイル名、曲の再生時間、アーティスト、タイトルが縦棒で区切られたフィールドに格納されています。典型的なファイルは次のようになっています：
+
+/jazz/j00132.mp3  | 3:45 | Fats     Waller     | Ain't Misbehavin'
+/jazz/j00319.mp3  | 2:58 | Louis    Armstrong  | Wonderful World
+/bgrass/bg0732.mp3| 4:09 | Strength in Numbers | Texas Red
+         :                  :           :                   :
+
+このデータを見ると、これらのフィールドを抽出して整形するために、Stringクラスのメソッドを使う必要があることがわかります。最低限、次の作業が必要です：
+
+行をフィールドに分割すること、
+
+再生時間をmm:ssから秒数に変換すること、
+
+アーティスト名の余分な空白を取り除くこと。
+
+
+最初のタスクは、各行をフィールドに分割することで、String#splitメソッドを使うと簡単にできます。この場合、分割する正規表現は、縦棒の周りにオプションでスペースがあるパターンである/\s*|\s*/です。ファイルから読み込んだ行には改行が含まれているので、String#chompを使って改行を取り除いてからsplitを適用します。
+
+songs = SongList.new
+
+songFile.each do |line|
+  file, length, name, title = line.chomp.split(/\s*\|\s*/)
+  songs.append Song.new(title, name, length)
+end
+puts songs[1]
+
+出力：
+
+Song: Wonderful World--Louis Armstrong (2:58)
+
+残念ながら、元のファイルを作成した人はアーティスト名を列に分けて入力したため、いくつかの名前に余分な空白があります。これらの空白は、私たちのハイテクなスーパーツイスト型フラットパネルDay-Gloディスプレイで見栄えが悪くなるので、作業を進める前にこれらの空白を取り除く必要があります。これにはいくつか方法がありますが、最もシンプルなのはString#squeezeを使って連続した文字の繰り返しを取り除く方法です。ここでは、文字列をその場で変更するsqueeze!メソッドを使います。
+
+songs = SongList.new
+
+songFile.each do |line|
+  file, length, name, title = line.chomp.split(/\s*\|\s*/)
+  name.squeeze!(" ")
+  songs.append Song.new(title, name, length)
+end
+puts songs[1]
+
+出力：
+
+Song: Wonderful World--Louis Armstrong (2:58)
+
+次に、時間形式の問題があります：ファイルでは「2:58」と表示されており、これを秒数で「178」に変換したいと考えています。再度splitを使って、コロンで時間を分割する方法もありますが、ここでは関連するメソッドString#scanを使用します。scanはsplitに似ていますが、文字列をパターンに基づいてチャンクに分けるために使用します。今回は、分と秒の両方に一致する1つ以上の数字を取得したいので、パターンは/\d+/です。
+
+songs = SongList.new
+songFile.each do |line|
+  file, length, name, title = line.chomp.split(/\s*\|\s*/)
+  name.squeeze!(" ")
+  mins, secs = length.scan(/\d+/)
+  songs.append Song.new(title, name, mins.to_i*60 + secs.to_i)
+end
+puts songs[1]
+
+出力：
+
+Song: Wonderful World--Louis Armstrong (178)
+
+さらに、ジュークボックスにはキーワード検索機能があります。曲のタイトルやアーティスト名の単語を入力すると、すべての一致するトラックをリスト表示します。「fats」と入力すると、例えばFats Domino、Fats Navarro、Fats Wallerの曲が表示されるかもしれません。この機能は、インデックス作成クラスを作成することで実装します。オブジェクトといくつかの文字列を与えると、そのオブジェクトを、文字列の中で出現するすべての2文字以上の単語の下でインデックスします。これにより、Stringクラスの他のメソッドをいくつか利用することができます。
+
+class WordIndex
+  def initialize
+    @index = Hash.new(nil)
+  end
+  def index(anObject, *phrases)
+    phrases.each do |aPhrase|
+      aPhrase.scan /\w[-\w']+/ do |aWord|   # 各単語を抽出
+        aWord.downcase!
+        @index[aWord] = [] if @index[aWord].nil?
+        @index[aWord].push(anObject)
+      end
+    end
+  end
+  def lookup(aWord)
+    @index[aWord.downcase]
+  end
+end
+
+String#scanメソッドは、文字列から正規表現に一致する要素を抽出します。ここでは、パターン\w[-\w']+が、単語の中に現れる可能性のある任意の文字の後に、ハイフン、別の単語の文字、またはアポストロフィが1回以上続く部分をマッチします。検索を大文字小文字を区別しないようにするため、抽出した単語と検索時に使う単語をすべて小文字に変換します。最初のdowncase!メソッドの名前の末尾に付いている感嘆符は、このメソッドが受け取った文字列をその場で変更することを示しています。
+
+次に、SongListクラスを拡張して、曲を追加する際にインデックスを作成し、単語を使って曲を検索できるメソッドを追加します。
+
+class SongList
+  def initialize
+    @songs = Array.new
+    @index = WordIndex.new
+  end
+  def append(aSong)
+    @songs.push(aSong)
+    @index.index(aSong, aSong.name, aSong.artist)
+    self
+  end
+  def lookup(aWord)
+    @index.lookup(aWord)
+  end
+end
+
+最後に、すべてをテストします。
+
+songs = SongList.new
+songFile.each do |line|
+  file, length, name, title = line.chomp.split(/\s*\|\s*/)
+  name.squeeze!(" ")
+  mins, secs = length.scan(/\d+/)
+  songs.append Song.new(title, name, mins.to_i*60 + secs.to_i)
+end
+puts songs.lookup("Fats")
+puts songs.lookup("ain't")
+puts songs.lookup("RED")
+puts songs.lookup("WoRlD")
+
+出力：
+
+Song: Ain't Misbehavin'--Fats Waller (225)
+Song: Ain't Misbehavin'--Fats Waller (225)
+Song: Texas Red--Strength in Numbers (249)
+Song: Wonderful World--Louis Armstrong (178)
+
+RubyのStringクラスにあるすべてのメソッドを紹介するには次の50ページを費やせますが、ここでは次に進んで、より簡単なデータ型である「範囲」について見ていきます。
+
