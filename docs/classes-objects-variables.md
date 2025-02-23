@@ -1,3 +1,6 @@
+> - 導入
+- 
+
 ## 1. 導入
 
 > クラスとオブジェクト(インスタンス)の作り方
@@ -85,7 +88,7 @@ aSong.to_s  # => "Song: Bicylops--Fleck (260)"
 
 ## 2. 継承とメッセージ
 
-> 継承について
+> 継承とは
 
 継承を使うと、別のクラスを基にして、新しいクラスを作成することができます。
 
@@ -104,7 +107,7 @@ class KaraokeSong < Song
 end
 ```
 
-`< Song`というクラス定義の行は、`KaraokeSong`が`Song`のサブクラスであることをRubyに伝えます。（予想通り、これにより`Songqは`KaraokeSong`の親クラスになります。人々はこれを親子関係と呼ぶこともあります。）
+`< Song`というクラス定義の行は、`KaraokeSong`が`Song`のサブクラスであることをRubyに伝えます。（想像の通り、これにより`Song`は`KaraokeSong`の親クラスになります。親子関係と呼ばれることもあります。）
 今のところは、一旦`initialize`メソッドについては心配しないでください。
 `super`の使い方については後で説明します。
 
@@ -115,7 +118,7 @@ aSong = KaraokeSong.new("My Way", "Sinatra", 225, "And now, the...")
 aSong.to_s  # => "Song: My Way--Sinatra (225)"
 ```
 
-> 
+> メッセージ
 
 実行はできましたが、なぜ`to_s`メソッドに歌詞が表示されないのでしょうか？
 
@@ -164,7 +167,7 @@ aSong = KaraokeSong.new("My Way", "Sinatra", 225, "And now, the...")
 aSong.to_s  # => "Song: My Way--Sinatra (225) [And now, the...]"
 ```
 
-これで、歌詞が正しく表示されるようになりました。
+これで、歌詞もちゃんと表示されるようになりました。
 
 > `Object`クラス
 
