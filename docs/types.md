@@ -256,3 +256,11 @@ Song: Wonderful World--Louis Armstrong (178)
 
 RubyのStringクラスにあるすべてのメソッドを紹介するには次の50ページを費やせますが、ここでは次に進んで、より簡単なデータ型である「範囲」について見ていきます。
 
+
+a = "The moon is made of cheese"
+showRE(a, /\w+/)     # => <<The>> moon is made of cheese
+showRE(a, /\s.*\s/)   # => The<< moon is made of >>cheese
+showRE(a, /\s.*?\s/)  # => The<< moon >>is made of cheese
+showRE(a, /[aeiou]{2,99}/)  # => The m<<oo>>n is made of cheese
+showRE(a, /mo?o/)     # => The <<moo>>n is made of cheese
+
